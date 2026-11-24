@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="wireframe">
+<html lang="id" data-theme="wireframe-dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -23,10 +23,8 @@
       }
       if (savedTheme === 'wireframe' || savedTheme === 'wireframe-dark') {
         document.documentElement.setAttribute('data-theme', savedTheme);
-      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-        document.documentElement.setAttribute('data-theme', 'wireframe-dark');
       } else {
-        document.documentElement.setAttribute('data-theme', 'wireframe');
+        document.documentElement.setAttribute('data-theme', 'wireframe-dark');
       }
     })();
   </script>
@@ -66,9 +64,9 @@
     /* Tema gelap kustom berbasis variabel CSS DaisyUI v5 agar tetap senada dengan gaya minimalis "wireframe" */
     [data-theme="wireframe-dark"] {
       color-scheme: dark;
-      --color-base-100: #1a1a1a;
-      --color-base-200: #222222;
-      --color-base-300: #2e2e2e;
+      --color-base-100: #121214;
+      --color-base-200: #18181b;
+      --color-base-300: #27272a;
       --color-base-content: #e5e5e5;
       --color-primary: #d4d4d4;
       --color-primary-content: #111111;
