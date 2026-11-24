@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="wireframe">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>[Nama Kamu] — Portfolio</title>
+  <meta name="description" content="Portofolio pribadi [Nama Lengkap Kamu] — [Profesi Kamu]." />
+
+  <!-- Favicon SVG inline untuk menghindari request 404 pada /favicon.ico -->
+  <link
+    rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>❄️</text></svg>"
+  />
+
+  <!-- Inisialisasi tema lebih awal (sebelum CSS dirender) agar tidak terjadi kedipan tema (FOUC) -->
+  <script>
+    (function () {
+      var savedTheme = null;
+      try {
+        savedTheme = localStorage.getItem('theme');
+      } catch (e) {
+        // Abaikan jika akses localStorage dibatasi oleh browser
+      }
+      if (savedTheme === 'wireframe' || savedTheme === 'wireframe-dark') {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'wireframe-dark');
+      } else {
+        document.documentElement.setAttribute('data-theme', 'wireframe');
+      }
+    })();
+  </script>
+
+  <!-- DaisyUI v5 & daftar tema bawaan (termasuk tema "wireframe") -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+
+  <!-- Tailwind CSS v4 Browser Build (tanpa build step & tanpa peringatan production) -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Font Awesome 6 untuk ikon sosial media, UI, dan sertifikasi (otomatis mengikuti warna teks tema) -->
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+
+  <!-- Gaya kustom: Smooth Scroll, offset anchor navbar fixed, canvas salju, dan tema gelap wireframe-dark -->
+  <style>
+    html {
+      scroll-behavior: smooth;
+    }
+
+    section {
+      scroll-margin-top: 5rem;
+    }
+
+    #snowfall {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Tema gelap kustom berbasis variabel CSS DaisyUI v5 agar tetap senada dengan gaya minimalis "wireframe" */
+    [data-theme="wireframe-dark"] {
+      color-scheme: dark;
+      --color-base-100: #1a1a1a;
+      --color-base-200: #222222;
+      --color-base-300: #2e2e2e;
+      --color-base-content: #e5e5e5;
+      --color-primary: #d4d4d4;
+      --color-primary-content: #111111;
+      --color-secondary: #a3a3a3;
+      --color-secondary-content: #111111;
+      --color-accent: #737373;
+      --color-accent-content: #ffffff;
+      --color-neutral: #404040;
+      --color-neutral-content: #f5f5f5;
+      --color-info: #3b82f6;
+      --color-info-content: #ffffff;
+      --color-success: #22c55e;
+      --color-success-content: #052e16;
+      --color-warning: #eab308;
+      --color-warning-content: #1f1300;
+      --color-error: #ef4444;
+      --color-error-content: #ffffff;
+      --radius-selector: 0rem;
+      --radius-field: 0.25rem;
+      --radius-box: 0.25rem;
+      --size-selector: 0.25rem;
+      --size-field: 0.25rem;
+      --border: 1px;
+      --depth: 0;
+      --noise: 0;
+    }
+  </style>
+</head>
+<body class="bg-base-100 text-base-content min-h-screen antialiased relative">
+
+  <!-- ==================== LATAR BELAKANG SALJU ==================== -->
+  <!-- Diletakkan sebagai elemen pertama agar melapisi seluruh viewport di belakang konten (z-0) -->
+  <canvas id="snowfall" aria-hidden="true"></canvas>
+
+  <!-- ==================== NAVBAR (FIXED) ==================== -->
+  <header class="navbar fixed top-0 inset-x-0 z-50 bg-base-100/80 backdrop-blur border-b border-base-300">
+    <div class="max-w-6xl mx-auto w-full px-4 flex items-center justify-between">
+      <!-- Logo / Nama Situs di Kiri -->
+      <a href="#home" class="text-xl font-bold tracking-tight">[Nama Kamu]</a>
+
+      <!-- Menu Desktop & Toggle Tema di Kanan -->
+      <div class="hidden md:flex items-center gap-2">
+        <nav aria-label="Navigasi utama">
+          <ul class="menu menu-horizontal px-1 gap-1">
+            <li><a href="#home">Home</a></li>
+            <!-- Ganti href="#" dengan tautan halaman Blog / Link Bio kamu jika sudah tersedia -->
+            <li><a href="#">Blog</a></li>
+            <li><a href="#resume">About</a></li>
+            <li><a href="#">Link Bio</a></li>
+          </ul>
+        </nav>
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle theme-toggle"
+          aria-label="Ganti tema gelap atau terang"
+          title="Ganti tema"
+        >
+          <i class="fa-solid fa-moon theme-icon-moon" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun theme-icon-sun hidden" aria-hidden="true"></i>
+        </button>
+      </div>
+
+      <!-- Kontrol Mobile: Toggle Tema + Dropdown DaisyUI -->
+      <div class="flex md:hidden items-center gap-1">
+        <button
+          type="button"
+          class="btn btn-ghost btn-circle theme-toggle"
+          aria-label="Ganti tema gelap atau terang"
+          title="Ganti tema"
+        >
+          <i class="fa-solid fa-moon theme-icon-moon" aria-hidden="true"></i>
+          <i class="fa-solid fa-sun theme-icon-sun hidden" aria-hidden="true"></i>
+        </button>
+
+        <div class="dropdown dropdown-end">
+          <div tabindex="0" role="button" class="btn btn-ghost btn-circle" aria-label="Buka menu navigasi">
+            <i class="fa-solid fa-bars" aria-hidden="true"></i>
+          </div>
+          <ul
+            tabindex="0"
+            class="menu dropdown-content bg-base-100 rounded-box z-50 mt-3 w-48 p-2 shadow border border-base-300 mobile-nav-menu"
+          >
+            <li><a href="#home">Home</a></li>
+            <li><a href="#">Blog</a></li>
+            <li><a href="#resume">About</a></li>
+            <li><a href="#">Link Bio</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== KONTEN UTAMA ==================== -->
+  <main class="relative z-10">
+
+    <!-- ==================== HERO SECTION ==================== -->
+    <section id="home" class="relative z-10 min-h-screen flex items-center pt-20 pb-12">
+      <div class="grid grid-cols-1 md:grid-cols-[2fr_1fr] gap-10 items-center max-w-6xl mx-auto px-4 w-full">
+
+        <!-- Kolom Teks Perkenalan -->
+        <div class="space-y-5 text-center md:text-left">
+          <p class="text-sm uppercase tracking-widest opacity-70">Hi, I'm</p>
+
+          <h1 class="text-4xl md:text-6xl font-bold tracking-tight">
+            [Nama Lengkap Kamu]
+          </h1>
+
+          <!-- Subjudul dengan efek mengetik Typed.js -->
+          <h2 class="text-xl md:text-3xl font-medium min-h-[2.25rem]">
+            I'm a <span id="typed-roles" class="font-bold underline decoration-2 underline-offset-4" aria-live="polite"></span>
+          </h2>
+
+          <p class="opacity-80 max-w-xl mx-auto md:mx-0 leading-relaxed">
+            [Deskripsi Singkat tentang diri kamu, keahlian utama di bidang teknologi, pengalaman membangun sistem yang andal, atau fokus karier saat ini.]
+          </p>
+
+          <!-- Baris Ikon Sosial Media (otomatis adaptif mode gelap/terang via currentColor) -->
+          <div class="flex flex-wrap justify-center md:justify-start gap-5 text-2xl pt-1">
+            <!-- Ganti alamat email dan link sosial media di bawah ini dengan milik kamu -->
+            <a
+              href="mailto:[email@kamu.com]"
+              aria-label="Email"
+              title="Email"
+              class="hover:scale-110 transition-transform"
+            >
+              <i class="fa-solid fa-envelope" aria-hidden="true"></i>
+            </a>
+            <a
+              href="[Link GitHub]"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub"
+              title="GitHub"
+              class="hover:scale-110 transition-transform"
+            >
+              <i class="fa-brands fa-github" aria-hidden="true"></i>
+            </a>
+            <a
+              href="[Link YouTube]"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              title="YouTube"
+              class="hover:scale-110 transition-transform"
+            >
+              <i class="fa-brands fa-youtube" aria-hidden="true"></i>
+            </a>
+            <a
+              href="[Link Instagram]"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              title="Instagram"
+              class="hover:scale-110 transition-transform"
+            >
+              <i class="fa-brands fa-instagram" aria-hidden="true"></i>
+            </a>
+            <a
+              href="[Link Telegram]"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Telegram"
+              title="Telegram"
+              class="hover:scale-110 transition-transform"
+            >
+              <i class="fa-brands fa-telegram" aria-hidden="true"></i>
+            </a>
+          </div>
+
+          <!-- Tombol Download Resume (Letakkan file resume.pdf di folder yang sama dengan index.html) -->
+          <div class="pt-2">
+            <a
+              href="resume.pdf"
+              download
+              class="btn border-0 bg-blue-500 text-white hover:bg-blue-600 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/40 transition-all duration-200"
+            >
+              <i class="fa-solid fa-download" aria-hidden="true"></i>
+              Download Resume
+            </a>
+          </div>
+        </div>
+
+        <!-- Kolom Foto Profil Squircle (tampil di atas pada mobile) -->
+        <div class="order-first md:order-last flex justify-center">
+          <div class="mask mask-squircle w-40 md:w-52 shadow-md">
+            <!-- Ganti src dengan path foto profil kamu (misalnya: assets/profile.jpg) -->
+            <img
+              src="https://placehold.co/200x200/png?text=Foto"
+              alt="Foto Profil [Nama Kamu]"
+              width="200"
+              height="200"
+              class="w-full h-full object-cover"
+            />
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== RESUME SECTION ==================== -->
+    <section id="resume" class="relative z-10 py-20 max-w-6xl mx-auto px-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Resume</h2>
+
+      <!-- Dua kolom di desktop (lg:grid-cols-2), satu kolom di mobile -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+        <!-- Kolom Kiri: Pendidikan & Organisasi -->
+        <div class="space-y-8">
+
+          <!-- Kartu Educations -->
+          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+            <div class="card-body">
+              <h3 class="card-title text-xl mb-4">
+                <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
+                Educations
+              </h3>
+
+              <ul class="timeline timeline-vertical timeline-compact timeline-snap-icon">
+                <li>
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-6 pl-2">
+                    <time class="text-xs font-mono opacity-70">[2020 – 2024]</time>
+                    <div class="text-base font-bold">[Nama Universitas]</div>
+                    <p class="text-sm opacity-80">[Jurusan / Program Studi]</p>
+                  </div>
+                  <hr class="bg-base-300" />
+                </li>
+
+                <li>
+                  <hr class="bg-base-300" />
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-2 pl-2">
+                    <time class="text-xs font-mono opacity-70">[2017 – 2020]</time>
+                    <div class="text-base font-bold">[Nama SMA / SMK]</div>
+                    <p class="text-sm opacity-80">[Jurusan Sekolah]</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Kartu Organizations -->
+          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+            <div class="card-body">
+              <h3 class="card-title text-xl mb-4">
+                <i class="fa-solid fa-users" aria-hidden="true"></i>
+                Organizations
+              </h3>
+
+              <ul class="timeline timeline-vertical timeline-compact timeline-snap-icon">
+                <li>
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-6 pl-2">
+                    <time class="text-xs font-mono opacity-70">[Tahun Mulai – Tahun Selesai]</time>
+                    <div class="text-base font-bold">[Nama Organisasi 1]</div>
+                    <p class="text-sm opacity-80">[Peran / Jabatan]</p>
+                  </div>
+                  <hr class="bg-base-300" />
+                </li>
+
+                <li>
+                  <hr class="bg-base-300" />
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-2 pl-2">
+                    <time class="text-xs font-mono opacity-70">[Tahun Mulai – Tahun Selesai]</time>
+                    <div class="text-base font-bold">[Nama Organisasi 2]</div>
+                    <p class="text-sm opacity-80">[Peran / Jabatan]</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Kolom Kanan: Pengalaman Kerja -->
+        <div>
+          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+            <div class="card-body">
+              <h3 class="card-title text-xl mb-4">
+                <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
+                Experiences
+              </h3>
+
+              <ul class="timeline timeline-vertical timeline-compact timeline-snap-icon">
+                <li>
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-6 pl-2">
+                    <time class="text-xs font-mono opacity-70">[Bulan Tahun – Sekarang]</time>
+                    <div class="text-base font-bold">[Judul Posisi 1]</div>
+                    <p class="text-sm opacity-80">[Nama Perusahaan 1] · [Lokasi]</p>
+                    <span class="badge badge-outline badge-sm mt-2">[Full-time]</span>
+                  </div>
+                  <hr class="bg-base-300" />
+                </li>
+
+                <li>
+                  <hr class="bg-base-300" />
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-6 pl-2">
+                    <time class="text-xs font-mono opacity-70">[Bulan Tahun – Bulan Tahun]</time>
+                    <div class="text-base font-bold">[Judul Posisi 2]</div>
+                    <p class="text-sm opacity-80">[Nama Perusahaan 2] · [Lokasi]</p>
+                    <span class="badge badge-outline badge-sm mt-2">[Internship]</span>
+                  </div>
+                  <hr class="bg-base-300" />
+                </li>
+
+                <li>
+                  <hr class="bg-base-300" />
+                  <div class="timeline-middle">
+                    <i class="fa-solid fa-circle-dot text-xs" aria-hidden="true"></i>
+                  </div>
+                  <div class="timeline-end mb-2 pl-2">
+                    <time class="text-xs font-mono opacity-70">[Bulan Tahun – Bulan Tahun]</time>
+                    <div class="text-base font-bold">[Judul Posisi 3]</div>
+                    <p class="text-sm opacity-80">[Nama Perusahaan 3] · [Lokasi]</p>
+                    <span class="badge badge-outline badge-sm mt-2">[Freelance]</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== CERTIFICATIONS SECTION ==================== -->
+    <section id="certifications" class="relative z-10 py-20 max-w-6xl mx-auto px-4">
+      <h2 class="text-3xl md:text-4xl font-bold text-center mb-12">Certifications</h2>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+
+        <!-- Kartu Sertifikasi 1 (Active) -->
+        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-shadow">
+          <figure class="px-6 pt-6">
+            <img
+              src="https://placehold.co/120x120/png?text=Badge"
+              alt="[Nama Sertifikasi 1] badge"
+              class="w-24 h-24 rounded"
+              loading="lazy"
+              width="96"
+              height="96"
+            />
+          </figure>
+          <div class="card-body items-center text-center">
+            <h3 class="card-title text-base">[Nama Sertifikasi 1]</h3>
+            <p class="text-sm font-medium opacity-80">[Penerbit Sertifikasi 1]</p>
+            <div class="text-sm opacity-70 space-y-0.5">
+              <p>Issued: [Bulan Tahun]</p>
+              <p>Expires: [Bulan Tahun]</p>
+            </div>
+            <div class="pt-1">
+              <span class="badge badge-success">Active</span>
+            </div>
+            <div class="card-actions pt-3">
+              <a href="#" class="btn btn-sm btn-outline">View Certificate</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Kartu Sertifikasi 2 (Active) -->
+        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-shadow">
+          <figure class="px-6 pt-6">
+            <img
+              src="https://placehold.co/120x120/png?text=Badge"
+              alt="[Nama Sertifikasi 2] badge"
+              class="w-24 h-24 rounded"
+              loading="lazy"
+              width="96"
+              height="96"
+            />
+          </figure>
+          <div class="card-body items-center text-center">
+            <h3 class="card-title text-base">[Nama Sertifikasi 2]</h3>
+            <p class="text-sm font-medium opacity-80">[Penerbit Sertifikasi 2]</p>
+            <div class="text-sm opacity-70 space-y-0.5">
+              <p>Issued: [Bulan Tahun]</p>
+              <p>Expires: [Bulan Tahun]</p>
+            </div>
+            <div class="pt-1">
+              <span class="badge badge-success">Active</span>
+            </div>
+            <div class="card-actions pt-3">
+              <a href="#" class="btn btn-sm btn-outline">View Certificate</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Kartu Sertifikasi 3 (Expired) -->
+        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-shadow">
+          <figure class="px-6 pt-6">
+            <img
+              src="https://placehold.co/120x120/png?text=Badge"
+              alt="[Nama Sertifikasi 3] badge"
+              class="w-24 h-24 rounded"
+              loading="lazy"
+              width="96"
+              height="96"
+            />
+          </figure>
+          <div class="card-body items-center text-center">
+            <h3 class="card-title text-base">[Nama Sertifikasi 3]</h3>
+            <p class="text-sm font-medium opacity-80">[Penerbit Sertifikasi 3]</p>
+            <div class="text-sm opacity-70 space-y-0.5">
+              <p>Issued: [Bulan Tahun]</p>
+              <p>Expires: [Bulan Tahun]</p>
+            </div>
+            <div class="pt-1">
+              <span class="badge badge-error">Expired</span>
+            </div>
+            <div class="card-actions pt-3">
+              <a href="#" class="btn btn-sm btn-outline">View Certificate</a>
+            </div>
+          </div>
+        </article>
+
+        <!-- Kartu Sertifikasi 4 (No Expiration) -->
+        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-shadow">
+          <figure class="px-6 pt-6">
+            <img
+              src="https://placehold.co/120x120/png?text=Badge"
+              alt="[Nama Sertifikasi 4] badge"
+              class="w-24 h-24 rounded"
+              loading="lazy"
+              width="96"
+              height="96"
+            />
+          </figure>
+          <div class="card-body items-center text-center">
+            <h3 class="card-title text-base">[Nama Sertifikasi 4]</h3>
+            <p class="text-sm font-medium opacity-80">[Penerbit Sertifikasi 4]</p>
+            <div class="text-sm opacity-70 space-y-0.5">
+              <p>Issued: [Bulan Tahun]</p>
+              <p>Expires: No Expiration</p>
+            </div>
+            <div class="pt-1">
+              <span class="badge badge-info">No Expiration</span>
+            </div>
+            <div class="card-actions pt-3">
+              <a href="#" class="btn btn-sm btn-outline">View Certificate</a>
+            </div>
+          </div>
+        </article>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== FOOTER ==================== -->
+  <footer class="footer footer-center relative z-10 p-6 border-t border-base-300 text-sm opacity-80">
+    <aside>
+      <p>&copy; <span id="year">2026</span> [Nama Kamu]. All rights reserved.</p>
+    </aside>
+  </footer>
+
+  <!-- ==================== DEPENDENSI JAVASCRIPT (CDN) ==================== -->
+  <script src="https://cdn.jsdelivr.net/npm/typed.js@2.1.0/dist/typed.umd.js"></script>
+
+  <!-- ==================== SKRIP INTERAKTIVITAS HALAMAN ==================== -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Pembaruan tahun hak cipta otomatis di footer
+      const yearEl = document.getElementById('year');
+      if (yearEl) {
+        yearEl.textContent = String(new Date().getFullYear());
+      }
+
+      // 2. Efek mengetik (Typed.js) pada subjudul Hero
+      const typedTarget = document.getElementById('typed-roles');
+      if (window.Typed && typedTarget) {
+        new window.Typed('#typed-roles', {
+          strings: ['Cloud Engineer', 'Software Developer', 'SRE', '[Peran Lainnya]'],
+          typeSpeed: 70,
+          backSpeed: 40,
+          backDelay: 1500,
+          loop: true,
+          showCursor: true,
+          cursorChar: '|'
+        });
+      }
+
+      // 3. Tutup dropdown navigasi mobile secara otomatis saat tautan diklik
+      document.querySelectorAll('.mobile-nav-menu a').forEach((link) => {
+        link.addEventListener('click', () => {
+          if (document.activeElement instanceof HTMLElement) {
+            document.activeElement.blur();
+          }
+        });
+      });
+
+      // 4. Efek Salju (Snowfall) Vanilla JS pada elemen canvas #snowfall
+      // Pengganti library eksternal canvas-snowfall agar bebas risiko 404/error API dan tetap ringan.
+      // Jika ingin mengganti ke library eksternal di masa depan, cukup muat skrip CDN-nya lalu ganti blok ini.
+      const canvas = document.getElementById('snowfall');
+      const ctx = canvas ? canvas.getContext('2d') : null;
+      let snowColor = '#888888';
+
+      function refreshSnowColor() {
+        const themeColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--color-base-content')
+          .trim();
+        snowColor = themeColor || '#888888';
+      }
+
+      if (canvas && ctx) {
+        let width = window.innerWidth;
+        let height = window.innerHeight;
+        let flakes = [];
+        const prefersReducedMotion =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function getFlakeCount() {
+          if (prefersReducedMotion) return 30;
+          return Math.min(120, Math.max(45, Math.floor(window.innerWidth / 12)));
+        }
+
+        function createFlake(randomY) {
+          return {
+            x: Math.random() * width,
+            y: randomY ? Math.random() * height : -4,
+            r: 1 + Math.random() * 2.5,
+            speedY: 0.45 + Math.random() * 1.15,
+            drift: 0.25 + Math.random() * 0.45,
+            phase: Math.random() * Math.PI * 2
+          };
+        }
+
+        function initFlakes() {
+          const targetCount = getFlakeCount();
+          flakes = Array.from({ length: targetCount }, () => createFlake(true));
+        }
+
+        function resizeCanvas() {
+          const dpr = Math.min(window.devicePixelRatio || 1, 2);
+          width = window.innerWidth;
+          height = window.innerHeight;
+          canvas.width = Math.floor(width * dpr);
+          canvas.height = Math.floor(height * dpr);
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function drawFrame(animate) {
+          ctx.clearRect(0, 0, width, height);
+          ctx.globalAlpha = 0.6;
+          ctx.fillStyle = '#888888';
+          ctx.fillStyle = snowColor;
+
+          for (let i = 0; i < flakes.length; i++) {
+            const flake = flakes[i];
+            ctx.beginPath();
+            ctx.arc(flake.x, flake.y, flake.r, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (animate) {
+              flake.y += flake.speedY;
+              flake.phase += 0.015;
+              flake.x += Math.sin(flake.phase) * flake.drift;
+
+              if (flake.y > height + flake.r) {
+                flake.y = -flake.r;
+                flake.x = Math.random() * width;
+              } else if (flake.x > width + flake.r) {
+                flake.x = -flake.r;
+              } else if (flake.x < -flake.r) {
+                flake.x = width + flake.r;
+              }
+            }
+          }
+
+          if (animate) {
+            window.requestAnimationFrame(() => drawFrame(true));
+          }
+        }
+
+        refreshSnowColor();
+        resizeCanvas();
+        initFlakes();
+
+        window.addEventListener('resize', () => {
+          resizeCanvas();
+          initFlakes();
+          if (prefersReducedMotion) {
+            drawFrame(false);
+          }
+        });
+
+        drawFrame(!prefersReducedMotion);
+      }
+
+      // 5. Logika Toggle Mode Gelap / Terang (wireframe <-> wireframe-dark) + persistensi localStorage
+      const htmlEl = document.documentElement;
+      const toggleButtons = document.querySelectorAll('.theme-toggle');
+
+      function updateIcon() {
+        const isDark = htmlEl.getAttribute('data-theme') === 'wireframe-dark';
+        document.querySelectorAll('.theme-icon-moon').forEach((icon) => {
+          icon.classList.toggle('hidden', isDark);
+        });
+        document.querySelectorAll('.theme-icon-sun').forEach((icon) => {
+          icon.classList.toggle('hidden', !isDark);
+        });
+      }
+
+      updateIcon();
+
+      toggleButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const currentTheme = htmlEl.getAttribute('data-theme');
+          const nextTheme = currentTheme === 'wireframe-dark' ? 'wireframe' : 'wireframe-dark';
+          htmlEl.setAttribute('data-theme', nextTheme);
+
+          try {
+            localStorage.setItem('theme', nextTheme);
+          } catch (e) {
+            // Abaikan jika penyimpanan localStorage dibatasi
+          }
+
+          updateIcon();
+          refreshSnowColor();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
