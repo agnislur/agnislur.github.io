@@ -772,8 +772,8 @@
             x: Math.random() * width,
             y: randomY ? Math.random() * height : -4,
             r: 1 + Math.random() * 2.5,
-            speedY: 0.45 + Math.random() * 1.15,
-            drift: 0.25 + Math.random() * 0.45,
+            speedY: 0.18 + Math.random() * 0.42,
+            drift: 0.15 + Math.random() * 0.3,
             phase: Math.random() * Math.PI * 2
           };
         }
@@ -806,7 +806,7 @@
 
             if (animate) {
               flake.y += flake.speedY;
-              flake.phase += 0.015;
+              flake.phase += 0.008;
               flake.x += Math.sin(flake.phase) * flake.drift;
 
               if (flake.y > height + flake.r) {
