@@ -132,13 +132,36 @@
       box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.35);
     }
+
+    /* Transisi warna tema super smooth untuk seluruh elemen saat peralihan mode */
+    html,
+    body,
+    header,
+    section,
+    footer,
+    .card,
+    .navbar,
+    .btn,
+    .badge {
+      transition: background-color 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  border-color 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+                  color 0.8s ease;
+    }
   </style>
 </head>
 <body class="bg-base-100 text-base-content min-h-screen antialiased relative">
 
-  <!-- ==================== LATAR BELAKANG SALJU ==================== -->
+  <!-- ==================== LATAR BELAKANG KOSMIK ==================== -->
   <!-- Diletakkan sebagai elemen pertama agar melapisi seluruh viewport di belakang konten (z-0) -->
   <canvas id="snowfall" aria-hidden="true"></canvas>
+
+  <!-- Overlay Kilau Kosmik (Supernova Transition) untuk transisi mulus antar tema -->
+  <div
+    id="cosmic-flash-overlay"
+    class="fixed inset-0 pointer-events-none z-[45] opacity-0 transition-opacity duration-1000 ease-in-out"
+    style="background: radial-gradient(circle at 50% 50%, rgba(255, 245, 220, 0.95), rgba(255, 255, 255, 0.92) 50%, rgba(235, 245, 255, 0.95));"
+    aria-hidden="true"
+  ></div>
 
   <!-- ==================== NAVBAR (FIXED) ==================== -->
   <header class="navbar fixed top-0 inset-x-0 z-50 bg-base-100/80 backdrop-blur border-b border-base-300">
@@ -984,12 +1007,14 @@
           starColor = 'rgba(60, 80, 110, 0.5)';
         }
       }
+      window.refreshMeteorCanvasColor = refreshMeteorColor;
 
       if (canvas && ctx) {
         let width = window.innerWidth;
         let height = window.innerHeight;
         let meteors = [];
         let bigMeteors = [];
+        let megaMeteor = null;
         let stars = [];
         let orbitAngle = 0;
         let nextBigMeteorTime = performance.now() + 2000;
@@ -1311,11 +1336,106 @@
             }
           }
 
+          // 5. Gambar Mega-Meteor Supernova (Transisi Tema Sinematik)
+          if (megaMeteor) {
+            const mm = megaMeteor;
+            const tailX = mm.x - (mm.vx / mm.speed) * mm.length;
+            const tailY = mm.y - (mm.vy / mm.speed) * mm.length;
+
+            const grad = ctx.createLinearGradient(tailX, tailY, mm.x, mm.y);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            grad.addColorStop(0.25, 'rgba(255, 120, 20, 0.45)');
+            grad.addColorStop(0.65, 'rgba(255, 210, 50, 0.85)');
+            grad.addColorStop(0.9, 'rgba(255, 250, 200, 0.95)');
+            grad.addColorStop(1, '#ffffff');
+
+            ctx.save();
+            ctx.shadowBlur = 45;
+            ctx.shadowColor = 'rgba(255, 220, 100, 0.95)';
+
+            // Ekor tebal bercahaya kosmik
+            ctx.beginPath();
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = mm.size * 1.5;
+            ctx.lineCap = 'round';
+            ctx.moveTo(tailX, tailY);
+            ctx.lineTo(mm.x, mm.y);
+            ctx.stroke();
+
+            // Pendar halo luar kepala meteor
+            const halo = ctx.createRadialGradient(mm.x, mm.y, 4, mm.x, mm.y, mm.size * 2.4);
+            halo.addColorStop(0, '#ffffff');
+            halo.addColorStop(0.35, 'rgba(255, 245, 180, 0.95)');
+            halo.addColorStop(0.7, 'rgba(255, 180, 50, 0.65)');
+            halo.addColorStop(1, 'rgba(255, 120, 0, 0)');
+
+            ctx.fillStyle = halo;
+            ctx.beginPath();
+            ctx.arc(mm.x, mm.y, mm.size * 2.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Inti putih bersinar menyilaukan
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(mm.x, mm.y, mm.size * 0.95, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            if (animate) {
+              mm.x += mm.vx;
+              mm.y += mm.vy;
+
+              // Saat kepala meteor melintasi tengah layar (~42%), picu kilau supernova dan perubahan tema
+              if (!mm.triggeredPeak && mm.x > width * 0.42) {
+                mm.triggeredPeak = true;
+                const overlay = document.getElementById('cosmic-flash-overlay');
+                if (overlay) {
+                  overlay.style.opacity = '0.92';
+                }
+                setTimeout(() => {
+                  if (typeof mm.onPeak === 'function') {
+                    mm.onPeak();
+                  }
+                }, 600);
+                setTimeout(() => {
+                  if (overlay) {
+                    overlay.style.opacity = '0';
+                  }
+                }, 1300);
+              }
+
+              if (mm.y > height + mm.length + 80 || mm.x > width + mm.length + 80) {
+                megaMeteor = null;
+              }
+            }
+          }
+
           if (animate) {
             orbitAngle += prefersReducedMotion ? 0 : 0.0022;
             window.requestAnimationFrame(() => drawFrame(true));
           }
         }
+
+        window.launchMegaMeteor = function (targetTheme, onPeak) {
+          if (megaMeteor) return;
+          const speed = Math.max(9, Math.min(16, width / 75));
+          const angle = Math.PI / 4.15;
+          const length = Math.max(380, width * 0.45);
+          const size = Math.max(16, Math.min(28, width * 0.02));
+
+          megaMeteor = {
+            x: -length * 0.6,
+            y: height * 0.05,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            speed: speed,
+            length: length,
+            size: size,
+            targetTheme: targetTheme,
+            triggeredPeak: false,
+            onPeak: onPeak
+          };
+        };
 
         refreshMeteorColor();
         resizeCanvas();
@@ -1334,7 +1454,7 @@
         drawFrame(!prefersReducedMotion);
       }
 
-      // 5. Logika Toggle Mode Gelap / Terang (wireframe <-> wireframe-dark) + persistensi localStorage
+      // 5. Logika Tema (Wireframe <-> Wireframe-Dark), Transisi Sinematik & Timer Otomatis
       const htmlEl = document.documentElement;
       const toggleButtons = document.querySelectorAll('.theme-toggle');
 
@@ -1348,22 +1468,62 @@
         });
       }
 
+      function applyTheme(newTheme) {
+        htmlEl.setAttribute('data-theme', newTheme);
+        try {
+          localStorage.setItem('theme', newTheme);
+        } catch (e) {
+          // Abaikan jika akses localStorage dibatasi
+        }
+        updateIcon();
+        if (typeof window.refreshMeteorCanvasColor === 'function') {
+          window.refreshMeteorCanvasColor();
+        }
+      }
+
+      function triggerSmoothThemeSwitch(targetTheme) {
+        if (typeof window.launchMegaMeteor === 'function') {
+          window.launchMegaMeteor(targetTheme, () => {
+            applyTheme(targetTheme);
+          });
+        } else {
+          applyTheme(targetTheme);
+        }
+      }
+
+      // Ekspos ke global window untuk debugging atau trigger eksternal
+      window.triggerSmoothThemeSwitch = triggerSmoothThemeSwitch;
+
       updateIcon();
 
+      // Otomatisasi: 30 detik pertama ke mode terang, lalu tiap 5 menit jika di mode gelap
+      let autoThemeTimer = null;
+
+      function scheduleNextAutoTheme(delayMs) {
+        if (autoThemeTimer) clearTimeout(autoThemeTimer);
+        autoThemeTimer = setTimeout(() => {
+          const currentTheme = htmlEl.getAttribute('data-theme');
+          if (currentTheme === 'wireframe-dark') {
+            triggerSmoothThemeSwitch('wireframe');
+          }
+          // Siklus berikutnya berulang tiap 5 menit (300.000 ms)
+          scheduleNextAutoTheme(5 * 60 * 1000);
+        }, delayMs);
+      }
+
+      // Mulai timer awal 30 detik (30.000 ms)
+      scheduleNextAutoTheme(30 * 1000);
+
+      // Event listener tombol toggle manual di navbar
       toggleButtons.forEach((btn) => {
         btn.addEventListener('click', () => {
           const currentTheme = htmlEl.getAttribute('data-theme');
           const nextTheme = currentTheme === 'wireframe-dark' ? 'wireframe' : 'wireframe-dark';
-          htmlEl.setAttribute('data-theme', nextTheme);
 
-          try {
-            localStorage.setItem('theme', nextTheme);
-          } catch (e) {
-            // Abaikan jika penyimpanan localStorage dibatasi
-          }
+          applyTheme(nextTheme);
 
-          updateIcon();
-          refreshMeteorColor();
+          // Jika pengguna kembali ke dark mode manual, jadwalkan timer 5 menit lagi agar nanti beralih ke light mode lagi
+          scheduleNextAutoTheme(5 * 60 * 1000);
         });
       });
 
