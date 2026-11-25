@@ -1035,16 +1035,17 @@
           { head: '#ffe6ee', glow: 'rgba(255, 80, 140, 0.95)', mid: 'rgba(255, 30, 90, 0.65)', shadow: 'rgba(255, 70, 130, 0.85)' }
         ];
 
-        // Bintang latar belakang yang berkedip halus
+        // Bintang latar belakang yang berkedip halus dengan kedalaman paralaks 3D
         function initStars() {
-          const starCount = prefersReducedMotion ? 20 : Math.min(50, Math.floor(width / 24));
+          const starCount = prefersReducedMotion ? 20 : Math.min(55, Math.floor(width / 22));
           stars = Array.from({ length: starCount }, () => ({
             x: Math.random() * width,
             y: Math.random() * height,
-            r: 0.6 + Math.random() * 1.0,
+            r: 0.6 + Math.random() * 1.1,
             baseAlpha: 0.2 + Math.random() * 0.5,
             phase: Math.random() * Math.PI * 2,
-            speed: 0.015 + Math.random() * 0.02
+            speed: 0.015 + Math.random() * 0.02,
+            depth: 0.3 + Math.random() * 0.7
           }));
         }
 
@@ -1126,7 +1127,10 @@
         function drawFrame(animate) {
           ctx.clearRect(0, 0, width, height);
 
-          // 1. Gambar bintang-bintang latar belakang yang berkedip pelan
+          // 1. Gambar bintang-bintang latar belakang dengan paralaks 3D gerak orbit POV
+          const cosA = Math.cos(orbitAngle);
+          const sinA = Math.sin(orbitAngle);
+
           for (let i = 0; i < stars.length; i++) {
             const star = stars[i];
             const alpha = star.baseAlpha + Math.sin(star.phase) * 0.25;
@@ -1138,114 +1142,135 @@
 
             if (animate) {
               star.phase += star.speed;
+              // Efek paralaks bintang berlawanan arah dengan orbit kamera kita
+              star.x -= cosA * (star.depth || 0.5) * 0.45;
+              star.y -= sinA * (star.depth || 0.5) * 0.22;
+
+              if (star.x < 0) star.x += width;
+              if (star.x > width) star.x -= width;
+              if (star.y < 0) star.y += height;
+              if (star.y > height) star.y -= height;
             }
           }
 
-          // 2. Simulasi Tata Surya: Matahari & Bumi berevolusi sesuai orbitnya
-          const sunX = width * 0.5;
-          const sunY = height * 0.48;
-          const rx = Math.min(width * 0.44, 390);
-          const ry = Math.min(height * 0.25, 180);
-          const tilt = -0.22; // Kemiringan bidang orbit dalam radian (~ -12.6 derajat)
+          // 2. POV Orbit Mengitari Matahari: Matahari dan Cincin Orbit Bergerak Dinamis di Pandangan Kita
+          const isDarkTheme = htmlEl.getAttribute('data-theme') === 'wireframe-dark';
+          const orbitRadX = Math.min(width * 0.28, 300);
+          const orbitRadY = Math.min(height * 0.16, 140);
+          const orbitTilt = -0.16; // Kemiringan bidang orbit kamera POV
 
-          // Gambar garis orbit elips bergaris putus-putus halus
+          // Posisi Matahari di viewport relatif terhadap orbit kita
+          const sunX = width * 0.5 - (cosA * orbitRadX * Math.cos(orbitTilt) - sinA * orbitRadY * Math.sin(orbitTilt));
+          const sunY = height * 0.47 - (cosA * orbitRadX * Math.sin(orbitTilt) + sinA * orbitRadY * Math.cos(orbitTilt));
+
+          // Skala kedalaman 3D (Z-Perspective): saat mendekat ke matahari (perihelion), matahari membesar & corona berpendar luas
+          const depthProgress = (sinA + 1) * 0.5; // 0..1
+          const sunScale = 0.8 + depthProgress * 0.45; // 0.8x -> 1.25x
+
+          // Cincin Lintasan Orbit Perspektif yang Berpusat pada Matahari dan Mengikuti Gerakan Kita
+          const ringRx = Math.min(width * 0.44, 420) * (0.92 + depthProgress * 0.16);
+          const ringRy = Math.min(height * 0.23, 200) * (0.92 + depthProgress * 0.16);
+          const ringTilt = orbitTilt;
+
+          // Cincin Orbit Utama (Jalur lintasan yang mengelilingi matahari)
           ctx.save();
-          ctx.setLineDash([4, 6]);
-          ctx.lineWidth = 1;
-          ctx.strokeStyle = 'rgba(130, 180, 240, 0.15)';
+          ctx.setLineDash([8, 10]);
+          ctx.lineWidth = 1.3;
+          ctx.strokeStyle = isDarkTheme ? 'rgba(100, 195, 255, 0.25)' : 'rgba(60, 130, 200, 0.22)';
           ctx.beginPath();
-          ctx.ellipse(sunX, sunY, rx, ry, tilt, 0, Math.PI * 2);
+          ctx.ellipse(sunX, sunY, ringRx, ringRy, ringTilt, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Cincin Resonansi Dalam (Inner Celestial Resonance Ring)
+          ctx.setLineDash([4, 8]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = isDarkTheme ? 'rgba(255, 210, 100, 0.18)' : 'rgba(220, 150, 50, 0.18)';
+          ctx.beginPath();
+          ctx.ellipse(sunX, sunY, ringRx * 0.62, ringRy * 0.62, ringTilt, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
 
-          // Hitung posisi Bumi di sepanjang orbit
-          const uX = Math.cos(orbitAngle) * rx;
-          const uY = Math.sin(orbitAngle) * ry;
-          const earthX = sunX + uX * Math.cos(tilt) - uY * Math.sin(tilt);
-          const earthY = sunY + uX * Math.sin(tilt) + uY * Math.cos(tilt);
-          const sinTheta = Math.sin(orbitAngle);
-          const earthScale = 1 + sinTheta * 0.28; // Skala dinamis 3D (0.72x saat di belakang, 1.28x saat di depan)
-          const earthIsBehind = sinTheta < 0;
+          // Partikel Pulsa Orbit (Orbital Beacons) yang Mengalir Mengikuti Rel Garis Orbit
+          for (let b = 0; b < 6; b++) {
+            const bAngle = orbitAngle * 1.6 + (b * Math.PI * 2) / 6;
+            const bx = sunX + (Math.cos(bAngle) * ringRx * Math.cos(ringTilt) - Math.sin(bAngle) * ringRy * Math.sin(ringTilt));
+            const by = sunY + (Math.cos(bAngle) * ringRx * Math.sin(ringTilt) + Math.sin(bAngle) * ringRy * Math.cos(ringTilt));
 
-          // Fungsi menggambar Matahari dengan pendar cahaya corona
-          function renderSun() {
             ctx.save();
-            const corona = ctx.createRadialGradient(sunX, sunY, 15, sunX, sunY, 72);
-            corona.addColorStop(0, 'rgba(255, 190, 60, 0.35)');
-            corona.addColorStop(0.5, 'rgba(255, 120, 20, 0.12)');
-            corona.addColorStop(1, 'rgba(255, 90, 0, 0)');
-            ctx.fillStyle = corona;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = isDarkTheme ? 'rgba(120, 220, 255, 0.9)' : 'rgba(255, 170, 40, 0.9)';
+            ctx.fillStyle = isDarkTheme ? 'rgba(180, 240, 255, 0.85)' : 'rgba(255, 180, 50, 0.85)';
             ctx.beginPath();
-            ctx.arc(sunX, sunY, 72, 0, Math.PI * 2);
-            ctx.fill();
-
-            ctx.shadowBlur = 26;
-            ctx.shadowColor = 'rgba(255, 170, 30, 0.85)';
-            const sunGrad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 24);
-            sunGrad.addColorStop(0, '#fffef2');
-            sunGrad.addColorStop(0.35, '#ffea70');
-            sunGrad.addColorStop(0.8, '#ff9900');
-            sunGrad.addColorStop(1, '#ff5500');
-            ctx.fillStyle = sunGrad;
-            ctx.beginPath();
-            ctx.arc(sunX, sunY, 24, 0, Math.PI * 2);
+            ctx.arc(bx, by, 1.8, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
           }
 
-          // Fungsi menggambar Planet Bumi dan Bulan
-          function renderEarth() {
-            ctx.save();
-            const r = Math.max(5, 7.5 * earthScale);
+          // Planet Pengiring Orbit di Cincin Dalam
+          const compAngle = orbitAngle * 2.8;
+          const compRx = ringRx * 0.62;
+          const compRy = ringRy * 0.62;
+          const compX = sunX + (Math.cos(compAngle) * compRx * Math.cos(ringTilt) - Math.sin(compAngle) * compRy * Math.sin(ringTilt));
+          const compY = sunY + (Math.cos(compAngle) * compRx * Math.sin(ringTilt) + Math.sin(compAngle) * compRy * Math.cos(ringTilt));
+          const compR = Math.max(3.5, 4.8 * (0.8 + Math.sin(compAngle) * 0.3));
 
-            ctx.shadowBlur = 14 * earthScale;
-            ctx.shadowColor = 'rgba(70, 160, 255, 0.85)';
+          ctx.save();
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(0, 210, 255, 0.7)';
+          const compGrad = ctx.createRadialGradient(compX - 1.5, compY - 1.5, 1, compX, compY, compR);
+          compGrad.addColorStop(0, '#a5f3fc');
+          compGrad.addColorStop(0.5, '#0284c7');
+          compGrad.addColorStop(1, '#082f49');
+          ctx.fillStyle = compGrad;
+          ctx.beginPath();
+          ctx.arc(compX, compY, compR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
 
-            // Pencahayaan Bumi: sisi menghadap matahari terang, sisi belakang malam
-            const lightAngle = Math.atan2(sunY - earthY, sunX - earthX);
-            const grad = ctx.createRadialGradient(
-              earthX + Math.cos(lightAngle) * (r * 0.4),
-              earthY + Math.sin(lightAngle) * (r * 0.4),
-              r * 0.15,
-              earthX,
-              earthY,
-              r
-            );
-            grad.addColorStop(0, '#70d6ff'); // Laut cerah
-            grad.addColorStop(0.3, '#0096c7'); // Samudra biru
-            grad.addColorStop(0.65, '#2a9d8f'); // Daratan benua kehijauan
-            grad.addColorStop(0.9, '#023e8a'); // Samudra dalam
-            grad.addColorStop(1, '#001233'); // Sisi malam bumi
+          // Render Matahari POV dengan Corona dan Sinar Surya Dinamis
+          ctx.save();
+          const coronaR = 85 * sunScale;
+          const corona = ctx.createRadialGradient(sunX, sunY, 15 * sunScale, sunX, sunY, coronaR);
+          corona.addColorStop(0, 'rgba(255, 190, 60, 0.42)');
+          corona.addColorStop(0.45, 'rgba(255, 120, 20, 0.18)');
+          corona.addColorStop(0.8, 'rgba(255, 80, 0, 0.05)');
+          corona.addColorStop(1, 'rgba(255, 60, 0, 0)');
+          ctx.fillStyle = corona;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, coronaR, 0, Math.PI * 2);
+          ctx.fill();
 
-            ctx.fillStyle = grad;
+          // Sinar Flare Surya (Solar Rays) yang Berputar Halus
+          const rayCount = 8;
+          ctx.save();
+          ctx.translate(sunX, sunY);
+          ctx.rotate(orbitAngle * 0.35);
+          ctx.strokeStyle = 'rgba(255, 235, 150, 0.14)';
+          ctx.lineWidth = 1.2;
+          for (let r = 0; r < rayCount; r++) {
+            const rayLen = (105 + Math.sin(orbitAngle * 2 + r) * 20) * sunScale;
             ctx.beginPath();
-            ctx.arc(earthX, earthY, r, 0, Math.PI * 2);
-            ctx.fill();
-
-            // Bulan kecil mengelilingi Bumi
-            const moonDist = 18 * earthScale;
-            const moonAngle = orbitAngle * 6.5;
-            const moonX = earthX + Math.cos(moonAngle) * moonDist;
-            const moonY = earthY + Math.sin(moonAngle) * (moonDist * 0.7);
-            const moonR = Math.max(1.2, 1.8 * earthScale);
-
-            ctx.shadowBlur = 4;
-            ctx.shadowColor = 'rgba(230, 235, 245, 0.7)';
-            ctx.fillStyle = '#e4e8f0';
-            ctx.beginPath();
-            ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.restore();
+            ctx.moveTo(-rayLen, 0);
+            ctx.lineTo(rayLen, 0);
+            ctx.stroke();
+            ctx.rotate(Math.PI / rayCount);
           }
+          ctx.restore();
 
-          // Render sesuai kedalaman z-order (apakah Bumi di depan atau belakang Matahari)
-          if (earthIsBehind) {
-            renderEarth();
-            renderSun();
-          } else {
-            renderSun();
-            renderEarth();
-          }
+          // Inti Matahari Membara
+          ctx.shadowBlur = 30 * sunScale;
+          ctx.shadowColor = 'rgba(255, 175, 40, 0.95)';
+          const coreR = 25 * sunScale;
+          const sunGrad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, coreR);
+          sunGrad.addColorStop(0, '#ffffff');
+          sunGrad.addColorStop(0.25, '#fff090');
+          sunGrad.addColorStop(0.65, '#ffaa00');
+          sunGrad.addColorStop(1, '#ff4500');
+          ctx.fillStyle = sunGrad;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, coreR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
 
           // 3. Gambar meteor-meteor normal yang turun lambat dengan gradien ekor
           for (let i = 0; i < meteors.length; i++) {
