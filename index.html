@@ -1024,10 +1024,10 @@
         let cityLights = [];
         let orbitAngle = 0;
         let nextBigMeteorTime = performance.now() + 2000;
-        let nextAsteroidTime = performance.now() + 2000;
-        let nextSatelliteTime = performance.now() + 4500;
-        let nextAstronautTime = performance.now() + 6500;
-        let nextAlienTime = performance.now() + 7000;
+        let nextAsteroidTime = performance.now() + 10000; // Asteroid keluar pertama kali 10 detik
+        let nextSatelliteTime = performance.now() + 15000; // Satelit keluar pertama kali 15 detik
+        let nextAstronautTime = Infinity; // Baru terhitung 25 detik setelah satelit keluar
+        let nextAlienTime = Infinity; // Baru terhitung 45 detik setelah asteroid keluar
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1709,11 +1709,10 @@
           const count = prefersReducedMotion ? 6 : Math.min(18, Math.max(10, Math.floor(width / 75)));
           meteors = Array.from({ length: count }, () => createMeteor(true));
           bigMeteors = [];
-          // Pre-populate 1 dari setiap entitas kosmik agar langsung tampak di layar sejak detik pertama
-          satellites = [createSatellite()];
-          asteroids = [createAsteroid()];
-          astronauts = [createAstronaut()];
-          aliens = [createAlien()];
+          satellites = [];
+          asteroids = [];
+          astronauts = [];
+          aliens = [];
         }
 
         function resizeCanvas() {
@@ -2041,7 +2040,11 @@
           // 6. Munculkan & Gambar Asteroid Berputar (tiap ~10 detik)
           if (animate && !prefersReducedMotion && now > nextAsteroidTime && asteroids.length < 2) {
             asteroids.push(createAsteroid());
-            nextAsteroidTime = now + 10000 + Math.random() * 2000;
+            nextAsteroidTime = now + 10000;
+            // Jika asteroid sudah keluar, maka alien & UFO baru terhitung untuk keluar 45 detik kemudian
+            if (nextAlienTime === Infinity) {
+              nextAlienTime = now + 45000;
+            }
           }
 
           for (let i = asteroids.length - 1; i >= 0; i--) {
@@ -2060,7 +2063,11 @@
           // 7. Munculkan & Gambar Satelit Nyata (tiap ~15 detik)
           if (animate && !prefersReducedMotion && now > nextSatelliteTime && satellites.length < 2) {
             satellites.push(createSatellite());
-            nextSatelliteTime = now + 15000 + Math.random() * 2000;
+            nextSatelliteTime = now + 15000;
+            // Jika satelit sudah keluar, maka astronot helm Kubernetes baru terhitung akan keluar 25 detik kemudian
+            if (nextAstronautTime === Infinity) {
+              nextAstronautTime = now + 25000;
+            }
           }
 
           for (let i = satellites.length - 1; i >= 0; i--) {
@@ -2076,10 +2083,10 @@
             }
           }
 
-          // 8. Munculkan & Gambar Astronot dengan Helm Logo Kubernetes (tiap ~25 detik)
+          // 8. Munculkan & Gambar Astronot dengan Helm Logo Kubernetes (terhitung 25 detik setelah satelit keluar)
           if (animate && !prefersReducedMotion && now > nextAstronautTime && astronauts.length < 2) {
             astronauts.push(createAstronaut());
-            nextAstronautTime = now + 25000 + Math.random() * 3000;
+            nextAstronautTime = Infinity; // Menunggu kemunculan satelit berikutnya untuk memicu hitung mundur 25 detik lagi
           }
 
           for (let i = astronauts.length - 1; i >= 0; i--) {
@@ -2094,10 +2101,10 @@
             }
           }
 
-          // 9. Munculkan & Gambar Alien / UFO yang Lewat Santai (tiap ~45 detik)
+          // 9. Munculkan & Gambar Alien / UFO yang Lewat Santai (terhitung 45 detik setelah asteroid keluar)
           if (animate && !prefersReducedMotion && now > nextAlienTime && aliens.length < 2) {
             aliens.push(createAlien());
-            nextAlienTime = now + 45000 + Math.random() * 4000;
+            nextAlienTime = Infinity; // Menunggu kemunculan asteroid berikutnya untuk memicu hitung mundur 45 detik lagi
           }
 
           for (let i = aliens.length - 1; i >= 0; i--) {
