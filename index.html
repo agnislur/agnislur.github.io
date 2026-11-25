@@ -862,9 +862,25 @@
         let width = window.innerWidth;
         let height = window.innerHeight;
         let meteors = [];
+        let bigMeteors = [];
         let stars = [];
+        let nextBigMeteorTime = performance.now() + 2000;
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Palet warna warni untuk meteor besar berkala
+        const bigMeteorPalettes = [
+          // 1. Cosmic Gold
+          { head: '#fff8db', glow: 'rgba(255, 185, 50, 0.95)', mid: 'rgba(255, 120, 20, 0.65)', shadow: 'rgba(255, 170, 50, 0.85)' },
+          // 2. Electric Cyan
+          { head: '#e6ffff', glow: 'rgba(0, 235, 255, 0.95)', mid: 'rgba(0, 140, 255, 0.65)', shadow: 'rgba(0, 220, 255, 0.85)' },
+          // 3. Nebula Purple / Magenta
+          { head: '#ffe8ff', glow: 'rgba(235, 70, 255, 0.95)', mid: 'rgba(150, 30, 255, 0.65)', shadow: 'rgba(220, 60, 255, 0.85)' },
+          // 4. Aurora Emerald Green
+          { head: '#e8ffea', glow: 'rgba(50, 255, 140, 0.95)', mid: 'rgba(0, 190, 110, 0.65)', shadow: 'rgba(40, 255, 130, 0.85)' },
+          // 5. Blazing Rose Pink
+          { head: '#ffe6ee', glow: 'rgba(255, 80, 140, 0.95)', mid: 'rgba(255, 30, 90, 0.65)', shadow: 'rgba(255, 70, 130, 0.85)' }
+        ];
 
         // Bintang latar belakang yang berkedip halus
         function initStars() {
@@ -911,9 +927,38 @@
           };
         }
 
+        function createBigMeteor() {
+          const palette = bigMeteorPalettes[Math.floor(Math.random() * bigMeteorPalettes.length)];
+          const speed = 1.25 + Math.random() * 0.85;
+          const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.15;
+          const length = 200 + Math.random() * 140;
+
+          let x, y;
+          if (Math.random() < 0.65) {
+            x = Math.random() * (width * 0.85);
+            y = -length - 20;
+          } else {
+            x = -length - 20;
+            y = Math.random() * (height * 0.45);
+          }
+
+          return {
+            x: x,
+            y: y,
+            length: length,
+            speed: speed,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 4 + Math.random() * 2.2,
+            palette: palette,
+            alpha: 0.95
+          };
+        }
+
         function initMeteors() {
           const count = prefersReducedMotion ? 6 : Math.min(18, Math.max(10, Math.floor(width / 75)));
           meteors = Array.from({ length: count }, () => createMeteor(true));
+          bigMeteors = [];
         }
 
         function resizeCanvas() {
@@ -943,7 +988,7 @@
             }
           }
 
-          // 2. Gambar meteor-meteor yang turun lambat dengan gradien ekor
+          // 2. Gambar meteor-meteor normal yang turun lambat dengan gradien ekor
           for (let i = 0; i < meteors.length; i++) {
             const m = meteors[i];
             const tailX = m.x - (m.vx / m.speed) * m.length;
@@ -978,6 +1023,56 @@
               if (m.y > height + m.length + 20 || m.x > width + m.length + 20) {
                 const fresh = createMeteor(false);
                 meteors[i] = fresh;
+              }
+            }
+          }
+
+          // 3. Munculkan meteor besar berwarna-warni secara berkala (tiap 4.5 - 7.5 detik)
+          const now = performance.now();
+          if (animate && !prefersReducedMotion && now > nextBigMeteorTime && bigMeteors.length < 2) {
+            bigMeteors.push(createBigMeteor());
+            nextBigMeteorTime = now + 4500 + Math.random() * 3000;
+          }
+
+          // 4. Gambar meteor besar langka dengan ekor panjang dan cahaya glow
+          for (let i = bigMeteors.length - 1; i >= 0; i--) {
+            const bm = bigMeteors[i];
+            const tailX = bm.x - (bm.vx / bm.speed) * bm.length;
+            const tailY = bm.y - (bm.vy / bm.speed) * bm.length;
+
+            const grad = ctx.createLinearGradient(tailX, tailY, bm.x, bm.y);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            grad.addColorStop(0.35, bm.palette.mid);
+            grad.addColorStop(0.85, bm.palette.glow);
+            grad.addColorStop(1, bm.palette.head);
+
+            ctx.save();
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = bm.palette.shadow;
+
+            // Ekor tebal bercahaya
+            ctx.beginPath();
+            ctx.globalAlpha = bm.alpha;
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = bm.size;
+            ctx.lineCap = 'round';
+            ctx.moveTo(tailX, tailY);
+            ctx.lineTo(bm.x, bm.y);
+            ctx.stroke();
+
+            // Kepala meteor bulat terang
+            ctx.beginPath();
+            ctx.fillStyle = bm.palette.head;
+            ctx.arc(bm.x, bm.y, bm.size * 1.1, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            if (animate) {
+              bm.x += bm.vx;
+              bm.y += bm.vy;
+
+              if (bm.y > height + bm.length + 50 || bm.x > width + bm.length + 50) {
+                bigMeteors.splice(i, 1);
               }
             }
           }
