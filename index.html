@@ -9,7 +9,7 @@
   <!-- Favicon SVG inline untuk menghindari request 404 pada /favicon.ico -->
   <link
     rel="icon"
-    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌧️</text></svg>"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>☄️</text></svg>"
   />
 
   <!-- Inisialisasi tema lebih awal (sebelum CSS dirender) agar tidak terjadi kedipan tema (FOUC) -->
@@ -837,49 +837,83 @@
         });
       });
 
-      // 4. Efek Hujan Gerimis Pelan (Gentle Drizzle) Vanilla JS pada elemen canvas #snowfall
+      // 4. Efek Meteor Turun Lambat (Slow-Falling Meteors) Vanilla JS pada canvas #snowfall
       const canvas = document.getElementById('snowfall');
       const ctx = canvas ? canvas.getContext('2d') : null;
-      let rainColor = 'rgba(165, 195, 230, 0.45)';
 
-      function refreshRainColor() {
+      let meteorHead = 'rgba(255, 255, 255, 0.95)';
+      let meteorGlow = 'rgba(165, 210, 255, 0.5)';
+      let starColor = 'rgba(230, 240, 255, 0.65)';
+
+      function refreshMeteorColor() {
         const theme = document.documentElement.getAttribute('data-theme');
         if (theme === 'wireframe-dark') {
-          rainColor = 'rgba(165, 195, 230, 0.45)';
+          meteorHead = 'rgba(255, 255, 255, 0.95)';
+          meteorGlow = 'rgba(165, 210, 255, 0.5)';
+          starColor = 'rgba(230, 240, 255, 0.65)';
         } else {
-          rainColor = 'rgba(70, 110, 160, 0.45)';
+          meteorHead = 'rgba(40, 60, 90, 0.9)';
+          meteorGlow = 'rgba(90, 130, 180, 0.4)';
+          starColor = 'rgba(60, 80, 110, 0.5)';
         }
       }
 
       if (canvas && ctx) {
         let width = window.innerWidth;
         let height = window.innerHeight;
-        let drops = [];
+        let meteors = [];
+        let stars = [];
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        function getDropCount() {
-          if (prefersReducedMotion) return 25;
-          return Math.min(100, Math.max(45, Math.floor(window.innerWidth / 16)));
+        // Bintang latar belakang yang berkedip halus
+        function initStars() {
+          const starCount = prefersReducedMotion ? 20 : Math.min(50, Math.floor(width / 24));
+          stars = Array.from({ length: starCount }, () => ({
+            x: Math.random() * width,
+            y: Math.random() * height,
+            r: 0.6 + Math.random() * 1.0,
+            baseAlpha: 0.2 + Math.random() * 0.5,
+            phase: Math.random() * Math.PI * 2,
+            speed: 0.015 + Math.random() * 0.02
+          }));
         }
 
-        function createDrop(randomY) {
-          const l = 10 + Math.random() * 12; // Panjang tetesan gerimis halus
-          const speedY = 1.8 + Math.random() * 1.4; // Kecepatan vertikal pelan dan santai
-          const speedX = -0.35 - Math.random() * 0.25; // Sedikit miring tertiup angin lembut
+        function createMeteor(randomPos) {
+          const speed = 0.9 + Math.random() * 0.9; // Gerakan meluncur sangat lambat dan anggun
+          const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.2; // Arah diagonal ~45 derajat (ke kanan bawah)
+          const length = 55 + Math.random() * 75; // Panjang ekor meteor
+
+          // Mulai dari atas atau kiri
+          let x, y;
+          if (randomPos) {
+            x = Math.random() * (width + length) - length * 0.5;
+            y = Math.random() * (height + length) - length * 0.5;
+          } else {
+            if (Math.random() < 0.6) {
+              x = Math.random() * (width + 100) - 50;
+              y = -length - 10;
+            } else {
+              x = -length - 10;
+              y = Math.random() * (height * 0.7);
+            }
+          }
+
           return {
-            x: Math.random() * (width + 60) - 20,
-            y: randomY ? Math.random() * height : -l - 5,
-            l: l,
-            speedY: speedY,
-            speedX: speedX,
-            opacity: 0.25 + Math.random() * 0.35
+            x: x,
+            y: y,
+            length: length,
+            speed: speed,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: 1.3 + Math.random() * 1.2,
+            alpha: 0.6 + Math.random() * 0.35
           };
         }
 
-        function initDrops() {
-          const targetCount = getDropCount();
-          drops = Array.from({ length: targetCount }, () => createDrop(true));
+        function initMeteors() {
+          const count = prefersReducedMotion ? 6 : Math.min(18, Math.max(10, Math.floor(width / 75)));
+          meteors = Array.from({ length: count }, () => createMeteor(true));
         }
 
         function resizeCanvas() {
@@ -893,29 +927,57 @@
 
         function drawFrame(animate) {
           ctx.clearRect(0, 0, width, height);
-          ctx.lineWidth = 1;
-          ctx.lineCap = 'round';
-          ctx.strokeStyle = rainColor;
 
-          for (let i = 0; i < drops.length; i++) {
-            const drop = drops[i];
+          // 1. Gambar bintang-bintang latar belakang yang berkedip pelan
+          for (let i = 0; i < stars.length; i++) {
+            const star = stars[i];
+            const alpha = star.baseAlpha + Math.sin(star.phase) * 0.25;
             ctx.beginPath();
-            ctx.globalAlpha = drop.opacity;
-            ctx.moveTo(drop.x, drop.y);
-            // Garis gerimis miring alami mengikuti kecepatan X & Y
-            ctx.lineTo(drop.x + drop.speedX * (drop.l / drop.speedY), drop.y + drop.l);
-            ctx.stroke();
+            ctx.globalAlpha = Math.max(0.1, Math.min(1, alpha));
+            ctx.fillStyle = starColor;
+            ctx.arc(star.x, star.y, star.r, 0, Math.PI * 2);
+            ctx.fill();
 
             if (animate) {
-              drop.x += drop.speedX;
-              drop.y += drop.speedY;
+              star.phase += star.speed;
+            }
+          }
 
-              if (drop.y > height + drop.l) {
-                drop.y = -drop.l - 5;
-                drop.x = Math.random() * (width + 60);
-              }
-              if (drop.x < -30) {
-                drop.x = width + 20;
+          // 2. Gambar meteor-meteor yang turun lambat dengan gradien ekor
+          for (let i = 0; i < meteors.length; i++) {
+            const m = meteors[i];
+            const tailX = m.x - (m.vx / m.speed) * m.length;
+            const tailY = m.y - (m.vy / m.speed) * m.length;
+
+            const grad = ctx.createLinearGradient(tailX, tailY, m.x, m.y);
+            grad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            grad.addColorStop(0.65, meteorGlow);
+            grad.addColorStop(1, meteorHead);
+
+            // Garis ekor bercahaya
+            ctx.beginPath();
+            ctx.globalAlpha = m.alpha;
+            ctx.strokeStyle = grad;
+            ctx.lineWidth = m.size;
+            ctx.lineCap = 'round';
+            ctx.moveTo(tailX, tailY);
+            ctx.lineTo(m.x, m.y);
+            ctx.stroke();
+
+            // Inti kepala meteor
+            ctx.beginPath();
+            ctx.fillStyle = meteorHead;
+            ctx.arc(m.x, m.y, m.size * 0.95, 0, Math.PI * 2);
+            ctx.fill();
+
+            if (animate) {
+              m.x += m.vx;
+              m.y += m.vy;
+
+              // Reset jika sudah lewat layar
+              if (m.y > height + m.length + 20 || m.x > width + m.length + 20) {
+                const fresh = createMeteor(false);
+                meteors[i] = fresh;
               }
             }
           }
@@ -925,13 +987,15 @@
           }
         }
 
-        refreshRainColor();
+        refreshMeteorColor();
         resizeCanvas();
-        initDrops();
+        initStars();
+        initMeteors();
 
         window.addEventListener('resize', () => {
           resizeCanvas();
-          initDrops();
+          initStars();
+          initMeteors();
           if (prefersReducedMotion) {
             drawFrame(false);
           }
@@ -969,7 +1033,7 @@
           }
 
           updateIcon();
-          refreshRainColor();
+          refreshMeteorColor();
         });
       });
     });
