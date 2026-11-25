@@ -93,6 +93,34 @@
       --depth: 0;
       --noise: 0;
     }
+
+    /* 3D Flip Card Effect untuk Foto Profil */
+    .flip-card {
+      perspective: 1000px;
+    }
+    .flip-card-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-card:hover .flip-card-inner,
+    .flip-card.flipped .flip-card-inner {
+      transform: rotateY(180deg);
+    }
+    .flip-card-front,
+    .flip-card-back {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    .flip-card-back {
+      transform: rotateY(180deg);
+    }
   </style>
 </head>
 <body class="bg-base-100 text-base-content min-h-screen antialiased relative">
@@ -233,16 +261,36 @@
           </div>
         </div>
 
-        <!-- Kolom Foto Profil Squircle (tampil di atas pada mobile) -->
+        <!-- Kolom Foto Profil Squircle dengan 3D Flip Effect (tampil di atas pada mobile) -->
         <div class="order-first md:order-last flex justify-center">
-          <div class="mask mask-squircle w-72 sm:w-80 md:w-[26rem] aspect-square shadow-2xl">
-            <img
-              src="profile.jpg"
-              alt="Foto Profil Agni Drawino"
-              width="416"
-              height="416"
-              class="w-full h-full object-cover"
-            />
+          <div
+            id="profile-flip-card"
+            class="flip-card w-72 sm:w-80 md:w-[26rem] aspect-square cursor-pointer select-none"
+            title="Hover atau klik untuk melihat foto asli Agni Drawino"
+          >
+            <div class="flip-card-inner">
+              <!-- Sisi Depan: Foto Kucing Avatar -->
+              <div class="flip-card-front mask mask-squircle shadow-2xl bg-base-300">
+                <img
+                  src="profile.jpg"
+                  alt="Foto Profil Avatar Agni Drawino"
+                  width="416"
+                  height="416"
+                  class="w-full h-full object-cover"
+                />
+              </div>
+
+              <!-- Sisi Belakang: Foto Asli Agni Drawino -->
+              <div class="flip-card-back mask mask-squircle shadow-2xl bg-base-300">
+                <img
+                  src="profile-real.jpg"
+                  alt="Foto Profil Asli Agni Drawino"
+                  width="416"
+                  height="416"
+                  class="w-full h-full object-cover object-center"
+                />
+              </div>
+            </div>
           </div>
         </div>
 
@@ -1239,6 +1287,14 @@
           refreshMeteorColor();
         });
       });
+
+      // 6. Flip Card Toggle saat di-klik/tap (terutama untuk mobile/touchscreen)
+      const flipCard = document.getElementById('profile-flip-card');
+      if (flipCard) {
+        flipCard.addEventListener('click', () => {
+          flipCard.classList.toggle('flipped');
+        });
+      }
     });
   </script>
 </body>
