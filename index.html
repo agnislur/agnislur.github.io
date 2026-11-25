@@ -864,6 +864,7 @@
         let meteors = [];
         let bigMeteors = [];
         let stars = [];
+        let orbitAngle = 0;
         let nextBigMeteorTime = performance.now() + 2000;
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -988,7 +989,113 @@
             }
           }
 
-          // 2. Gambar meteor-meteor normal yang turun lambat dengan gradien ekor
+          // 2. Simulasi Tata Surya: Matahari & Bumi berevolusi sesuai orbitnya
+          const sunX = width * 0.5;
+          const sunY = height * 0.48;
+          const rx = Math.min(width * 0.44, 390);
+          const ry = Math.min(height * 0.25, 180);
+          const tilt = -0.22; // Kemiringan bidang orbit dalam radian (~ -12.6 derajat)
+
+          // Gambar garis orbit elips bergaris putus-putus halus
+          ctx.save();
+          ctx.setLineDash([4, 6]);
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = 'rgba(130, 180, 240, 0.15)';
+          ctx.beginPath();
+          ctx.ellipse(sunX, sunY, rx, ry, tilt, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+
+          // Hitung posisi Bumi di sepanjang orbit
+          const uX = Math.cos(orbitAngle) * rx;
+          const uY = Math.sin(orbitAngle) * ry;
+          const earthX = sunX + uX * Math.cos(tilt) - uY * Math.sin(tilt);
+          const earthY = sunY + uX * Math.sin(tilt) + uY * Math.cos(tilt);
+          const sinTheta = Math.sin(orbitAngle);
+          const earthScale = 1 + sinTheta * 0.28; // Skala dinamis 3D (0.72x saat di belakang, 1.28x saat di depan)
+          const earthIsBehind = sinTheta < 0;
+
+          // Fungsi menggambar Matahari dengan pendar cahaya corona
+          function renderSun() {
+            ctx.save();
+            const corona = ctx.createRadialGradient(sunX, sunY, 15, sunX, sunY, 72);
+            corona.addColorStop(0, 'rgba(255, 190, 60, 0.35)');
+            corona.addColorStop(0.5, 'rgba(255, 120, 20, 0.12)');
+            corona.addColorStop(1, 'rgba(255, 90, 0, 0)');
+            ctx.fillStyle = corona;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, 72, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.shadowBlur = 26;
+            ctx.shadowColor = 'rgba(255, 170, 30, 0.85)';
+            const sunGrad = ctx.createRadialGradient(sunX, sunY, 2, sunX, sunY, 24);
+            sunGrad.addColorStop(0, '#fffef2');
+            sunGrad.addColorStop(0.35, '#ffea70');
+            sunGrad.addColorStop(0.8, '#ff9900');
+            sunGrad.addColorStop(1, '#ff5500');
+            ctx.fillStyle = sunGrad;
+            ctx.beginPath();
+            ctx.arc(sunX, sunY, 24, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Fungsi menggambar Planet Bumi dan Bulan
+          function renderEarth() {
+            ctx.save();
+            const r = Math.max(5, 7.5 * earthScale);
+
+            ctx.shadowBlur = 14 * earthScale;
+            ctx.shadowColor = 'rgba(70, 160, 255, 0.85)';
+
+            // Pencahayaan Bumi: sisi menghadap matahari terang, sisi belakang malam
+            const lightAngle = Math.atan2(sunY - earthY, sunX - earthX);
+            const grad = ctx.createRadialGradient(
+              earthX + Math.cos(lightAngle) * (r * 0.4),
+              earthY + Math.sin(lightAngle) * (r * 0.4),
+              r * 0.15,
+              earthX,
+              earthY,
+              r
+            );
+            grad.addColorStop(0, '#70d6ff'); // Laut cerah
+            grad.addColorStop(0.3, '#0096c7'); // Samudra biru
+            grad.addColorStop(0.65, '#2a9d8f'); // Daratan benua kehijauan
+            grad.addColorStop(0.9, '#023e8a'); // Samudra dalam
+            grad.addColorStop(1, '#001233'); // Sisi malam bumi
+
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.arc(earthX, earthY, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bulan kecil mengelilingi Bumi
+            const moonDist = 18 * earthScale;
+            const moonAngle = orbitAngle * 6.5;
+            const moonX = earthX + Math.cos(moonAngle) * moonDist;
+            const moonY = earthY + Math.sin(moonAngle) * (moonDist * 0.7);
+            const moonR = Math.max(1.2, 1.8 * earthScale);
+
+            ctx.shadowBlur = 4;
+            ctx.shadowColor = 'rgba(230, 235, 245, 0.7)';
+            ctx.fillStyle = '#e4e8f0';
+            ctx.beginPath();
+            ctx.arc(moonX, moonY, moonR, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Render sesuai kedalaman z-order (apakah Bumi di depan atau belakang Matahari)
+          if (earthIsBehind) {
+            renderEarth();
+            renderSun();
+          } else {
+            renderSun();
+            renderEarth();
+          }
+
+          // 3. Gambar meteor-meteor normal yang turun lambat dengan gradien ekor
           for (let i = 0; i < meteors.length; i++) {
             const m = meteors[i];
             const tailX = m.x - (m.vx / m.speed) * m.length;
@@ -1078,6 +1185,7 @@
           }
 
           if (animate) {
+            orbitAngle += prefersReducedMotion ? 0 : 0.0022;
             window.requestAnimationFrame(() => drawFrame(true));
           }
         }
