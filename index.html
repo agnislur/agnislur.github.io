@@ -1015,9 +1015,15 @@
         let meteors = [];
         let bigMeteors = [];
         let megaMeteor = null;
+        let satellites = [];
+        let asteroids = [];
+        let astronauts = [];
         let stars = [];
         let orbitAngle = 0;
         let nextBigMeteorTime = performance.now() + 2000;
+        let nextAsteroidTime = performance.now() + 2000;
+        let nextSatelliteTime = performance.now() + 4500;
+        let nextAstronautTime = performance.now() + 6500;
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1109,10 +1115,347 @@
           };
         }
 
+        // Generator Satelit Nyata
+        function createSatellite() {
+          const fromLeft = Math.random() < 0.5;
+          const startY = height * 0.12 + Math.random() * (height * 0.45);
+          const angle = fromLeft ? (0.28 + (Math.random() - 0.5) * 0.12) : (Math.PI - 0.28 + (Math.random() - 0.5) * 0.12);
+          const speed = 0.75 + Math.random() * 0.35;
+          return {
+            x: fromLeft ? -60 : width + 60,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            rotation: angle,
+            blinkPhase: Math.random() * Math.PI * 2
+          };
+        }
+
+        // Generator Asteroid Berputar (Tumbling Rock)
+        function createAsteroid() {
+          const fromLeft = Math.random() < 0.65;
+          const startY = -40;
+          const angle = Math.PI / 4 + (Math.random() - 0.5) * 0.22;
+          const speed = 1.05 + Math.random() * 0.55;
+          const size = 11 + Math.random() * 7;
+          const vertices = [];
+          const numVerts = 10;
+          for (let i = 0; i < numVerts; i++) {
+            const theta = (i * Math.PI * 2) / numVerts;
+            const r = size * (0.8 + Math.random() * 0.4);
+            vertices.push({ x: Math.cos(theta) * r, y: Math.sin(theta) * r });
+          }
+
+          return {
+            x: fromLeft ? Math.random() * (width * 0.75) : width + 30,
+            y: startY,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: size,
+            rotation: Math.random() * Math.PI * 2,
+            spin: (Math.random() - 0.5) * 0.024,
+            vertices: vertices,
+            craters: [
+              { x: size * 0.22, y: -size * 0.2, r: size * 0.22 },
+              { x: -size * 0.28, y: size * 0.18, r: size * 0.18 },
+              { x: size * 0.1, y: size * 0.32, r: size * 0.15 }
+            ]
+          };
+        }
+
+        // Generator Astronot Melayang dengan Helm Logo Kubernetes
+        function createAstronaut() {
+          const fromLeft = Math.random() < 0.5;
+          const startY = height * 0.12 + Math.random() * (height * 0.28);
+          const speed = 0.55 + Math.random() * 0.25;
+          const direction = fromLeft ? 1 : -1;
+          return {
+            x: fromLeft ? -70 : width + 70,
+            y: startY,
+            baseY: startY,
+            speed: speed * direction,
+            scale: 0.9 + Math.random() * 0.25,
+            wobblePhase: Math.random() * Math.PI * 2,
+            direction: direction
+          };
+        }
+
+        // Render Satelit Nyata dengan Bodi Emas, Antena Parabola, dan Panel Surya Biru
+        function renderSatellite(sat) {
+          ctx.save();
+          ctx.translate(sat.x, sat.y);
+          ctx.rotate(sat.rotation);
+
+          // Penyangga sayap panel surya
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-35, 0);
+          ctx.lineTo(35, 0);
+          ctx.stroke();
+
+          // Sayap panel surya kiri
+          ctx.fillStyle = '#0284c7';
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1;
+          ctx.fillRect(-35, -7, 23, 14);
+          ctx.strokeRect(-35, -7, 23, 14);
+
+          // Garis sel surya kiri
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.beginPath();
+          ctx.moveTo(-24, -7); ctx.lineTo(-24, 7);
+          ctx.moveTo(-35, 0); ctx.lineTo(-12, 0);
+          ctx.stroke();
+
+          // Sayap panel surya kanan
+          ctx.fillStyle = '#0284c7';
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.fillRect(12, -7, 23, 14);
+          ctx.strokeRect(12, -7, 23, 14);
+
+          // Garis sel surya kanan
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+          ctx.beginPath();
+          ctx.moveTo(23, -7); ctx.lineTo(23, 7);
+          ctx.moveTo(12, 0); ctx.lineTo(35, 0);
+          ctx.stroke();
+
+          // Bodi utama satelit (golden space foil)
+          const bodyGrad = ctx.createLinearGradient(-10, -8, 10, 8);
+          bodyGrad.addColorStop(0, '#fef08a');
+          bodyGrad.addColorStop(0.5, '#eab308');
+          bodyGrad.addColorStop(1, '#ca8a04');
+          ctx.fillStyle = bodyGrad;
+          ctx.strokeStyle = '#a16207';
+          ctx.lineWidth = 1;
+          ctx.fillRect(-10, -8, 20, 16);
+          ctx.strokeRect(-10, -8, 20, 16);
+
+          // Antena parabola piringan di bagian depan bodi
+          ctx.save();
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(13, 0, 8, -Math.PI * 0.42, Math.PI * 0.42);
+          ctx.stroke();
+          ctx.fillStyle = '#94a3b8';
+          ctx.beginPath();
+          ctx.arc(17, 0, 1.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Antena telemetri di bagian belakang
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(-10, -4); ctx.lineTo(-18, -9);
+          ctx.moveTo(-10, 4); ctx.lineTo(-18, 9);
+          ctx.stroke();
+
+          // Lampu suar beacon LED berkedip hijau
+          const isBlink = Math.sin(sat.blinkPhase) > 0.1;
+          if (isBlink) {
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = '#4ade80';
+            ctx.fillStyle = '#22c55e';
+            ctx.beginPath();
+            ctx.arc(0, -9, 2, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          ctx.restore();
+        }
+
+        // Render Asteroid Berputar (Tumbling Rock)
+        function renderAsteroid(ast) {
+          ctx.save();
+          ctx.translate(ast.x, ast.y);
+          ctx.rotate(ast.rotation);
+
+          // Jejak debu mikro
+          if (Math.random() < 0.25) {
+            ctx.fillStyle = 'rgba(203, 213, 225, 0.45)';
+            ctx.beginPath();
+            ctx.arc(-ast.size * 1.1, (Math.random() - 0.5) * ast.size, 1, 0, Math.PI * 2);
+            ctx.fill();
+          }
+
+          // Bentuk polygon batu bertekstur
+          ctx.beginPath();
+          const v = ast.vertices;
+          ctx.moveTo(v[0].x, v[0].y);
+          for (let i = 1; i < v.length; i++) {
+            ctx.lineTo(v[i].x, v[i].y);
+          }
+          ctx.closePath();
+
+          const grad = ctx.createLinearGradient(-ast.size, -ast.size, ast.size, ast.size);
+          grad.addColorStop(0, '#94a3b8');
+          grad.addColorStop(0.5, '#64748b');
+          grad.addColorStop(1, '#334155');
+          ctx.fillStyle = grad;
+          ctx.fill();
+          ctx.strokeStyle = '#475569';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // Kawah benturan (craters)
+          for (let c = 0; c < ast.craters.length; c++) {
+            const cr = ast.craters[c];
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.6)';
+            ctx.beginPath();
+            ctx.arc(cr.x, cr.y, cr.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+            ctx.lineWidth = 0.8;
+            ctx.stroke();
+          }
+
+          ctx.restore();
+        }
+
+        // Render Astronot Melayang dengan Helm Logo Kubernetes
+        function renderAstronaut(astro) {
+          ctx.save();
+          const currentY = astro.baseY + Math.sin(astro.wobblePhase) * 12;
+          ctx.translate(astro.x, currentY);
+          ctx.scale(astro.direction * astro.scale, astro.scale);
+          ctx.rotate(Math.sin(astro.wobblePhase * 0.8) * 0.14);
+
+          // Hembusan gas mikro pendorong jetpack
+          if (Math.sin(astro.wobblePhase * 3.5) > 0.45) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(186, 230, 253, 0.55)';
+            ctx.beginPath();
+            ctx.arc(-18, 12 + Math.random() * 4, 2 + Math.random() * 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Tas ransel oksigen / jetpack di punggung
+          ctx.fillStyle = '#cbd5e1';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1;
+          ctx.fillRect(-17, -10, 8, 22);
+          ctx.strokeRect(-17, -10, 8, 22);
+
+          // Tabung oksigen di ransel
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(-16, -8, 6, 8);
+          ctx.fillRect(-16, 2, 6, 8);
+
+          // Kaki astronot melayang bersendi
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.moveTo(-4, 12); ctx.lineTo(-8, 24); ctx.lineTo(-4, 26);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(2, 12); ctx.lineTo(4, 22); ctx.lineTo(10, 24);
+          ctx.stroke();
+
+          // Sepatu antariksa
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(-9, 23, 7, 4);
+          ctx.fillRect(4, 21, 7, 4);
+
+          // Bodi / baju antariksa putih tebal
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.roundRect ? ctx.roundRect(-8, -4, 18, 18, 4) : ctx.rect(-8, -4, 18, 18);
+          ctx.fill();
+          ctx.stroke();
+
+          // Chest control unit di dada
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(-4, 0, 10, 8);
+          ctx.fillStyle = '#22c55e';
+          ctx.fillRect(-2, 2, 2, 2);
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(2, 2, 2, 2);
+
+          // Lengan astronot melambai
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 3.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-4, 0); ctx.lineTo(-12, -4);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(8, 0); ctx.lineTo(16, -6);
+          ctx.stroke();
+
+          // Helm astronot putih bulat
+          const helmX = 1;
+          const helmY = -15;
+          const helmR = 12.5;
+
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(helmX, helmY, helmR, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          // Kaca visor helm biru resmi Kubernetes
+          ctx.save();
+          ctx.shadowBlur = 8;
+          ctx.shadowColor = 'rgba(50, 108, 229, 0.85)';
+          ctx.fillStyle = '#326ce5';
+          ctx.beginPath();
+          ctx.arc(helmX, helmY, helmR - 2.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          // Logo Kubernetes 7-Spoke Ship Helm Wheel di kaca visor
+          ctx.save();
+          ctx.translate(helmX, helmY);
+          ctx.strokeStyle = '#ffffff';
+          ctx.lineWidth = 1.1;
+
+          // Lingkaran roda kemudi luar
+          ctx.beginPath();
+          ctx.arc(0, 0, 5.5, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Hub poros tengah putih
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(0, 0, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 7 ruji jari-jari kemudi khas Kubernetes
+          for (let s = 0; s < 7; s++) {
+            const spokeAngle = (s * Math.PI * 2) / 7 - Math.PI / 2;
+            const cosS = Math.cos(spokeAngle);
+            const sinS = Math.sin(spokeAngle);
+            ctx.beginPath();
+            ctx.moveTo(cosS * 1.4, sinS * 1.4);
+            ctx.lineTo(cosS * 5.5, sinS * 5.5);
+            ctx.stroke();
+            // Pegangan kemudi di luar lingkaran
+            ctx.beginPath();
+            ctx.moveTo(cosS * 5.5, sinS * 5.5);
+            ctx.lineTo(cosS * 7.4, sinS * 7.4);
+            ctx.stroke();
+          }
+          ctx.restore();
+
+          ctx.restore();
+        }
+
         function initMeteors() {
           const count = prefersReducedMotion ? 6 : Math.min(18, Math.max(10, Math.floor(width / 75)));
           meteors = Array.from({ length: count }, () => createMeteor(true));
           bigMeteors = [];
+          satellites = [];
+          asteroids = [];
+          astronauts = [];
         }
 
         function resizeCanvas() {
@@ -1431,6 +1774,62 @@
 
               if (mm.y > height + mm.length + 80 || mm.x > width + mm.length + 80) {
                 megaMeteor = null;
+              }
+            }
+          }
+
+          // 6. Munculkan & Gambar Asteroid Berputar (tiap ~10 detik)
+          if (animate && !prefersReducedMotion && now > nextAsteroidTime && asteroids.length < 2) {
+            asteroids.push(createAsteroid());
+            nextAsteroidTime = now + 10000 + Math.random() * 2000;
+          }
+
+          for (let i = asteroids.length - 1; i >= 0; i--) {
+            const ast = asteroids[i];
+            renderAsteroid(ast);
+            if (animate) {
+              ast.x += ast.vx;
+              ast.y += ast.vy;
+              ast.rotation += ast.spin;
+              if (ast.y > height + 60 || ast.x < -60 || ast.x > width + 60) {
+                asteroids.splice(i, 1);
+              }
+            }
+          }
+
+          // 7. Munculkan & Gambar Satelit Nyata (tiap ~15 detik)
+          if (animate && !prefersReducedMotion && now > nextSatelliteTime && satellites.length < 2) {
+            satellites.push(createSatellite());
+            nextSatelliteTime = now + 15000 + Math.random() * 2000;
+          }
+
+          for (let i = satellites.length - 1; i >= 0; i--) {
+            const sat = satellites[i];
+            renderSatellite(sat);
+            if (animate) {
+              sat.x += sat.vx;
+              sat.y += sat.vy;
+              sat.blinkPhase += 0.08;
+              if (sat.x < -100 || sat.x > width + 100 || sat.y < -100 || sat.y > height + 100) {
+                satellites.splice(i, 1);
+              }
+            }
+          }
+
+          // 8. Munculkan & Gambar Astronot dengan Helm Logo Kubernetes (tiap ~25 detik)
+          if (animate && !prefersReducedMotion && now > nextAstronautTime && astronauts.length < 2) {
+            astronauts.push(createAstronaut());
+            nextAstronautTime = now + 25000 + Math.random() * 3000;
+          }
+
+          for (let i = astronauts.length - 1; i >= 0; i--) {
+            const astro = astronauts[i];
+            renderAstronaut(astro);
+            if (animate) {
+              astro.x += astro.speed;
+              astro.wobblePhase += 0.025;
+              if ((astro.direction > 0 && astro.x > width + 100) || (astro.direction < 0 && astro.x < -100)) {
+                astronauts.splice(i, 1);
               }
             }
           }
