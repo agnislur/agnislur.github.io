@@ -120,13 +120,15 @@
       transform: rotateY(180deg);
     }
 
-    /* Efek interaktif kartu sertifikasi maju saat mouse lewat */
-    .cert-card {
+    /* Efek interaktif kartu maju saat mouse lewat */
+    .cert-card,
+    .interactive-card {
       transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease, border-color 0.35s ease;
       will-change: transform;
     }
-    .cert-card:hover {
-      transform: translateY(-10px) scale(1.02);
+    .cert-card:hover,
+    .interactive-card:hover {
+      transform: translateY(-8px) scale(1.015);
       box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 255, 255, 0.1);
       border-color: rgba(255, 255, 255, 0.35);
     }
@@ -317,7 +319,7 @@
         <div class="space-y-8">
 
           <!-- Kartu Educations -->
-          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+          <div class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
             <div class="card-body">
               <h3 class="card-title text-xl mb-4">
                 <i class="fa-solid fa-graduation-cap" aria-hidden="true"></i>
@@ -349,7 +351,7 @@
           </div>
 
           <!-- Kartu Organizations -->
-          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+          <div class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
             <div class="card-body">
               <h3 class="card-title text-xl mb-4">
                 <i class="fa-solid fa-users" aria-hidden="true"></i>
@@ -406,7 +408,7 @@
 
         <!-- Kolom Kanan: Pengalaman Kerja -->
         <div>
-          <div class="card bg-base-100/70 backdrop-blur border border-base-300">
+          <div class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
             <div class="card-body">
               <h3 class="card-title text-xl mb-4">
                 <i class="fa-solid fa-briefcase" aria-hidden="true"></i>
@@ -609,7 +611,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Research Paper 1 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body justify-between">
             <div class="space-y-3">
               <div class="flex items-center justify-between gap-2">
@@ -655,7 +657,7 @@
         </article>
 
         <!-- Research Paper 2 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body justify-between">
             <div class="space-y-3">
               <div class="flex items-center justify-between gap-2">
@@ -710,7 +712,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
         <!-- Achievement 1 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body">
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-2">
@@ -733,7 +735,7 @@
         </article>
 
         <!-- Achievement 2 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body">
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-2">
@@ -756,7 +758,7 @@
         </article>
 
         <!-- Achievement 3 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body">
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-2">
@@ -779,7 +781,7 @@
         </article>
 
         <!-- Achievement 4 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300">
           <div class="card-body">
             <div class="flex items-start justify-between gap-4">
               <div class="space-y-2">
@@ -811,7 +813,7 @@
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         <!-- Article 1 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all flex flex-col justify-between">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300 flex flex-col justify-between">
           <div class="card-body">
             <div class="space-y-3">
               <div class="flex items-center justify-between">
@@ -846,7 +848,7 @@
         </article>
 
         <!-- Article 2 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all flex flex-col justify-between">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300 flex flex-col justify-between">
           <div class="card-body">
             <div class="space-y-3">
               <div class="flex items-center justify-between">
@@ -881,7 +883,7 @@
         </article>
 
         <!-- Article 3 -->
-        <article class="card bg-base-100/70 backdrop-blur border border-base-300 hover:shadow-xl transition-all flex flex-col justify-between">
+        <article class="card interactive-card bg-base-100/70 backdrop-blur border border-base-300 flex flex-col justify-between">
           <div class="card-body">
             <div class="space-y-3">
               <div class="flex items-center justify-between">
