@@ -1018,12 +1018,14 @@
         let satellites = [];
         let asteroids = [];
         let astronauts = [];
+        let aliens = [];
         let stars = [];
         let orbitAngle = 0;
         let nextBigMeteorTime = performance.now() + 2000;
         let nextAsteroidTime = performance.now() + 2000;
         let nextSatelliteTime = performance.now() + 4500;
         let nextAstronautTime = performance.now() + 6500;
+        let nextAlienTime = performance.now() + 7000;
         const prefersReducedMotion =
           window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -1449,6 +1451,128 @@
           ctx.restore();
         }
 
+        // Generator Alien / UFO yang Lewat Santai Melintasi Langit
+        function createAlien() {
+          const fromLeft = Math.random() < 0.5;
+          const startY = height * 0.14 + Math.random() * (height * 0.38);
+          const speed = 0.75 + Math.random() * 0.3;
+          const direction = fromLeft ? 1 : -1;
+          return {
+            x: fromLeft ? -75 : width + 75,
+            y: startY,
+            baseY: startY,
+            speed: speed * direction,
+            scale: 0.85 + Math.random() * 0.25,
+            direction: direction,
+            phase: Math.random() * Math.PI * 2,
+            lightsPhase: 0
+          };
+        }
+
+        // Render UFO Piring Terbang dengan Alien Hijau Lucu di Dalamnya
+        function renderAlien(alien) {
+          ctx.save();
+          const currentY = alien.baseY + Math.sin(alien.phase) * 14;
+          ctx.translate(alien.x, currentY);
+          ctx.scale(alien.scale, alien.scale);
+          ctx.rotate(Math.sin(alien.phase * 0.85) * 0.08 + (alien.direction > 0 ? 0.04 : -0.04));
+
+          // 1. Sorotan Sinar Cahaya Bawah (Tractor Beam Glow)
+          const beamGrad = ctx.createLinearGradient(0, 6, 0, 38);
+          beamGrad.addColorStop(0, 'rgba(52, 211, 153, 0.35)');
+          beamGrad.addColorStop(1, 'rgba(52, 211, 153, 0)');
+          ctx.fillStyle = beamGrad;
+          ctx.beginPath();
+          ctx.moveTo(-10, 6);
+          ctx.lineTo(10, 6);
+          ctx.lineTo(24, 38);
+          ctx.lineTo(-24, 38);
+          ctx.closePath();
+          ctx.fill();
+
+          // 2. Sosok Alien Hijau Lucu di Dalam Kubah
+          // Kepala alien hijau
+          ctx.fillStyle = '#4ade80';
+          ctx.beginPath();
+          ctx.ellipse(0, -9, 5.5, 6.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Antena alien kecil dengan bola bercahaya
+          ctx.strokeStyle = '#22c55e';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, -15);
+          ctx.lineTo(0, -20);
+          ctx.stroke();
+          ctx.fillStyle = '#86efac';
+          ctx.beginPath();
+          ctx.arc(0, -20, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Dua mata hitam besar oval miring khas alien
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.ellipse(-2.2, -9.5, 1.6, 2.3, -0.22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath();
+          ctx.ellipse(2.2, -9.5, 1.6, 2.3, 0.22, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Titik pantulan mata putih imut
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(-2.4, -10.5, 0.6, 0, Math.PI * 2);
+          ctx.arc(2, -10.5, 0.6, 0, Math.PI * 2);
+          ctx.fill();
+
+          // 3. Kubah Kaca Transparan (Glass Dome)
+          ctx.save();
+          ctx.shadowBlur = 10;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.8)';
+          const domeGrad = ctx.createLinearGradient(0, -22, 0, -2);
+          domeGrad.addColorStop(0, 'rgba(224, 242, 254, 0.85)');
+          domeGrad.addColorStop(1, 'rgba(56, 189, 248, 0.4)');
+          ctx.fillStyle = domeGrad;
+          ctx.beginPath();
+          ctx.arc(0, -4, 11, Math.PI, 0);
+          ctx.fill();
+          ctx.strokeStyle = '#e0f2fe';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.restore();
+
+          // 4. Bodi Logam Piring Terbang (Metallic Flying Saucer Body)
+          const saucerGrad = ctx.createLinearGradient(0, -5, 0, 8);
+          saucerGrad.addColorStop(0, '#f8fafc');
+          saucerGrad.addColorStop(0.5, '#94a3b8');
+          saucerGrad.addColorStop(1, '#475569');
+          ctx.fillStyle = saucerGrad;
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 26, 7.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          // 5. Lampu-lampu LED Neon Berkedip Mengelilingi UFO
+          const lightColors = ['#fde047', '#34d399', '#a855f7', '#38bdf8', '#fb923c'];
+          for (let l = 0; l < 5; l++) {
+            const lx = -18 + l * 9;
+            const ly = 1.8;
+            const cIdx = Math.floor((l + alien.lightsPhase) % lightColors.length);
+            ctx.save();
+            ctx.shadowBlur = 6;
+            ctx.shadowColor = lightColors[cIdx];
+            ctx.fillStyle = lightColors[cIdx];
+            ctx.beginPath();
+            ctx.arc(lx, ly, 1.6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.restore();
+        }
+
         function initMeteors() {
           const count = prefersReducedMotion ? 6 : Math.min(18, Math.max(10, Math.floor(width / 75)));
           meteors = Array.from({ length: count }, () => createMeteor(true));
@@ -1456,6 +1580,7 @@
           satellites = [];
           asteroids = [];
           astronauts = [];
+          aliens = [];
         }
 
         function resizeCanvas() {
@@ -1830,6 +1955,25 @@
               astro.wobblePhase += 0.025;
               if ((astro.direction > 0 && astro.x > width + 100) || (astro.direction < 0 && astro.x < -100)) {
                 astronauts.splice(i, 1);
+              }
+            }
+          }
+
+          // 9. Munculkan & Gambar Alien / UFO yang Lewat Santai (tiap ~45 detik)
+          if (animate && !prefersReducedMotion && now > nextAlienTime && aliens.length < 2) {
+            aliens.push(createAlien());
+            nextAlienTime = now + 45000 + Math.random() * 4000;
+          }
+
+          for (let i = aliens.length - 1; i >= 0; i--) {
+            const alien = aliens[i];
+            renderAlien(alien);
+            if (animate) {
+              alien.x += alien.speed;
+              alien.phase += 0.022;
+              alien.lightsPhase += 0.08;
+              if ((alien.direction > 0 && alien.x > width + 100) || (alien.direction < 0 && alien.x < -100)) {
+                aliens.splice(i, 1);
               }
             }
           }
